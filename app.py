@@ -30,6 +30,23 @@ def get_video_info():
             'quiet': True,
             'no_warnings': True,
             'extract_flat': False,
+            'nocheckcertificate': True,
+            'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'referer': 'https://www.youtube.com/',
+            'extractor_args': {
+                'youtube': {
+                    'player_client': ['android', 'web'],
+                    'player_skip': ['configs', 'webpage'],
+                    'skip': ['hls', 'dash']
+                }
+            },
+            # Add more headers to look like a real browser
+            'http_headers': {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                'Accept-Language': 'en-us,en;q=0.5',
+                'Sec-Fetch-Mode': 'navigate',
+            }
         }
         
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -104,6 +121,22 @@ def download_video():
             'outtmpl': os.path.join(temp_dir, '%(title)s.%(ext)s'),
             'quiet': True,
             'no_warnings': True,
+            'nocheckcertificate': True,
+            'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'referer': 'https://www.youtube.com/',
+            'extractor_args': {
+                'youtube': {
+                    'player_client': ['android', 'web'],
+                    'player_skip': ['configs', 'webpage'],
+                    'skip': ['hls', 'dash']
+                }
+            },
+            'http_headers': {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                'Accept-Language': 'en-us,en;q=0.5',
+                'Sec-Fetch-Mode': 'navigate',
+            }
         }
         
         # If audio only, convert to mp3
