@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube Downloader</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .subtitle {
+            color: #666;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 500;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            flex: 1;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        #videoInfo {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        #videoInfo.show {
+            display: block;
+        }
+
+        .video-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .quality-selector {
+            margin-top: 15px;
+        }
+
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            background: white;
+            cursor: pointer;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        #status {
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+            text-align: center;
+        }
+
+        #status.show {
+            display: block;
+        }
+
+        .status-loading {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .loader {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+            display: none;
+        }
+
+        .loader.show {
+            display: block;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .download-link {
+            display: inline-block;
+            background: #28a745;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            text-decoration: none;
+            margin-top: 10px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .download-link:hover {
+            background: #218838;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(40, 167, 69, 0.4);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎥 YouTube Downloader</h1>
+        <p class="subtitle">Download YouTube videos in any quality</p>
+
+        <div class="input-group">
+            <label for="videoUrl">YouTube Video URL</label>
+            <input type="text" id="videoUrl" placeholder="https://www.youtube.com/watch?v=..." />
+        </div>
+
+        <div class="button-group">
+            <button class="btn-primary" id="fetchBtn">Get Video Info</button>
+            <button class="btn-secondary" id="clearBtn">Clear</button>
+        </div>
+
+        <div id="status"></div>
+        <div class="loader" id="loader"></div>
+
+        <div id="videoInfo">
+            <div class="video-title" id="videoTitle"></div>
+            <div class="quality-selector">
+                <label for="qualitySelect">Select Quality</label>
+                <select id="qualitySelect">
+                    <option value="">Loading formats...</option>
+                </select>
+            </div>
+            <button class="btn-primary" id="downloadBtn" style="width: 100%; margin-top: 15px;">Download Video</button>
+        </div>
+    </div>
+
+    <script>
+        const videoUrlInput = document.getElementById('videoUrl');
+        const fetchBtn = document.getElementById('fetchBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const videoInfo = document.getElementById('videoInfo');
+        const videoTitle = document.getElementById('videoTitle');
+        const qualitySelect = document.getElementById('qualitySelect');
+        const status = document.getElementById('status');
+        const loader = document.getElementById('loader');
+
+        function showStatus(message, type) {
+            status.textContent = message;
+            status.className = `status-${type} show`;
+        }
+
+        function hideStatus() {
+            status.className = '';
+        }
+
+        function showLoader() {
+            loader.classList.add('show');
+        }
+
+        function hideLoader() {
+            loader.classList.remove('show');
+        }
+
+        fetchBtn.addEventListener('click', async () => {
+            const url = videoUrlInput.value.trim();
+            
+            if (!url) {
+                showStatus('Please enter a YouTube URL', 'error');
+                return;
+            }
+
+            hideStatus();
+            showLoader();
+            fetchBtn.disabled = true;
+            videoInfo.classList.remove('show');
+
+            try {
+                const response = await fetch('/api/info', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ url })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to fetch video info');
+                }
+
+                videoTitle.textContent = data.title;
+                
+                // Populate quality options
+                qualitySelect.innerHTML = '';
+                data.formats.forEach(format => {
+                    const option = document.createElement('option');
+                    option.value = format.format_id;
+                    option.textContent = format.label;
+                    qualitySelect.appendChild(option);
+                });
+
+                videoInfo.classList.add('show');
+                showStatus('Video info loaded successfully!', 'success');
+
+            } catch (error) {
+                showStatus(error.message, 'error');
+            } finally {
+                hideLoader();
+                fetchBtn.disabled = false;
+            }
+        });
+
+        downloadBtn.addEventListener('click', async () => {
+            const url = videoUrlInput.value.trim();
+            const formatId = qualitySelect.value;
+
+            if (!formatId) {
+                showStatus('Please select a quality', 'error');
+                return;
+            }
+
+            hideStatus();
+            showLoader();
+            downloadBtn.disabled = true;
+
+            try {
+                const response = await fetch('/api/download', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ url, format_id: formatId })
+                });
+
+                if (!response.ok) {
+                    const data = await response.json();
+                    throw new Error(data.error || 'Download failed');
+                }
+
+                // Get the blob from response
+                const blob = await response.blob();
+                const downloadUrl = window.URL.createObjectURL(blob);
+                
+                // Get filename from Content-Disposition header or use default
+                const contentDisposition = response.headers.get('Content-Disposition');
+                let filename = 'video.mp4';
+                if (contentDisposition) {
+                    const filenameMatch = contentDisposition.match(/filename="?(.+)"?/);
+                    if (filenameMatch) {
+                        filename = filenameMatch[1];
+                    }
+                }
+
+                // Create download link and trigger download
+                const a = document.createElement('a');
+                a.href = downloadUrl;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(downloadUrl);
+
+                showStatus('Download started! Check your downloads folder.', 'success');
+
+            } catch (error) {
+                showStatus(error.message, 'error');
+            } finally {
+                hideLoader();
+                downloadBtn.disabled = false;
+            }
+        });
+
+        clearBtn.addEventListener('click', () => {
+            videoUrlInput.value = '';
+            videoInfo.classList.remove('show');
+            hideStatus();
+            qualitySelect.innerHTML = '<option value="">Loading formats...</option>';
+        });
+
+        // Allow Enter key to trigger fetch
+        videoUrlInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                fetchBtn.click();
+            }
+        });
+    </script>
+</body>
+</html>
