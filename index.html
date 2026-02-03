@@ -43,6 +43,26 @@
             font-size: 14px;
         }
 
+        .info-box {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #2196f3;
+        }
+
+        .info-box h3 {
+            color: #1976d2;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .info-box p {
+            color: #0d47a1;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
         .input-group {
             margin-bottom: 20px;
         }
@@ -102,6 +122,15 @@
 
         .btn-secondary:hover {
             background: #e0e0e0;
+        }
+
+        .btn-warning {
+            background: #ff9800;
+            color: white;
+        }
+
+        .btn-warning:hover {
+            background: #f57c00;
         }
 
         button:disabled {
@@ -174,6 +203,11 @@
             color: #721c24;
         }
 
+        .status-info {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
         .loader {
             border: 3px solid #f3f3f3;
             border-top: 3px solid #667eea;
@@ -194,29 +228,47 @@
             100% { transform: rotate(360deg); }
         }
 
-        .download-link {
-            display: inline-block;
-            background: #28a745;
-            color: white;
-            padding: 12px 24px;
-            border-radius: 8px;
-            text-decoration: none;
+        .strategy-info {
+            font-size: 12px;
+            color: #666;
             margin-top: 10px;
-            font-weight: 600;
-            transition: all 0.3s;
+            padding: 10px;
+            background: #f5f5f5;
+            border-radius: 5px;
         }
 
-        .download-link:hover {
-            background: #218838;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(40, 167, 69, 0.4);
+        .retry-section {
+            display: none;
+            margin-top: 15px;
+        }
+
+        .retry-section.show {
+            display: block;
+        }
+
+        .error-details {
+            font-size: 12px;
+            margin-top: 10px;
+            padding: 10px;
+            background: #fff;
+            border-radius: 5px;
+            color: #666;
+            word-break: break-word;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>🎥 YouTube Downloader</h1>
-        <p class="subtitle">Download YouTube videos in any quality</p>
+        <p class="subtitle">Powered by yt-dlp with multi-strategy extraction</p>
+
+        <div class="info-box">
+            <h3>⚡ Advanced Features Active:</h3>
+            <p>✅ Random user-agent rotation<br>
+               ✅ 5 different extraction strategies<br>
+               ✅ Embed URL fallback<br>
+               ✅ Auto-retry on failure</p>
+        </div>
 
         <div class="input-group">
             <label for="videoUrl">YouTube Video URL</label>
@@ -231,6 +283,10 @@
         <div id="status"></div>
         <div class="loader" id="loader"></div>
 
+        <div class="retry-section" id="retrySection">
+            <button class="btn-warning" id="retryBtn">🔄 Retry with Different Strategy</button>
+        </div>
+
         <div id="videoInfo">
             <div class="video-title" id="videoTitle"></div>
             <div class="quality-selector">
@@ -240,6 +296,10 @@
                 </select>
             </div>
             <button class="btn-primary" id="downloadBtn" style="width: 100%; margin-top: 15px;">Download Video</button>
+            
+            <div class="strategy-info">
+                💡 Tip: If download fails, try a different quality or click retry.
+            </div>
         </div>
     </div>
 
@@ -248,11 +308,16 @@
         const fetchBtn = document.getElementById('fetchBtn');
         const clearBtn = document.getElementById('clearBtn');
         const downloadBtn = document.getElementById('downloadBtn');
+        const retryBtn = document.getElementById('retryBtn');
         const videoInfo = document.getElementById('videoInfo');
         const videoTitle = document.getElementById('videoTitle');
         const qualitySelect = document.getElementById('qualitySelect');
         const status = document.getElementById('status');
         const loader = document.getElementById('loader');
+        const retrySection = document.getElementById('retrySection');
+
+        let retryCount = 0;
+        const MAX_RETRIES = 3;
 
         function showStatus(message, type) {
             status.textContent = message;
@@ -271,7 +336,17 @@
             loader.classList.remove('show');
         }
 
-        fetchBtn.addEventListener('click', async () => {
+        function showRetry() {
+            if (retryCount < MAX_RETRIES) {
+                retrySection.classList.add('show');
+            }
+        }
+
+        function hideRetry() {
+            retrySection.classList.remove('show');
+        }
+
+        async function fetchVideoInfo() {
             const url = videoUrlInput.value.trim();
             
             if (!url) {
@@ -280,9 +355,12 @@
             }
 
             hideStatus();
+            hideRetry();
             showLoader();
             fetchBtn.disabled = true;
             videoInfo.classList.remove('show');
+
+            showStatus('Trying multiple extraction strategies... This may take a moment.', 'info');
 
             try {
                 const response = await fetch('/api/info', {
@@ -311,14 +389,33 @@
                 });
 
                 videoInfo.classList.add('show');
-                showStatus('Video info loaded successfully!', 'success');
+                showStatus('✅ Video info loaded successfully!', 'success');
+                retryCount = 0;
+                hideRetry();
 
             } catch (error) {
-                showStatus(error.message, 'error');
+                retryCount++;
+                const errorMsg = error.message || 'Unknown error';
+                showStatus(`❌ ${errorMsg}`, 'error');
+                
+                // Add technical error details if available
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'error-details';
+                errorDiv.textContent = `Attempt ${retryCount}/${MAX_RETRIES + 1}. ${errorMsg}`;
+                status.appendChild(errorDiv);
+                
+                showRetry();
             } finally {
                 hideLoader();
                 fetchBtn.disabled = false;
             }
+        }
+
+        fetchBtn.addEventListener('click', fetchVideoInfo);
+        
+        retryBtn.addEventListener('click', () => {
+            showStatus('🔄 Retrying with different strategy...', 'info');
+            setTimeout(fetchVideoInfo, 1000); // Small delay before retry
         });
 
         downloadBtn.addEventListener('click', async () => {
@@ -333,6 +430,8 @@
             hideStatus();
             showLoader();
             downloadBtn.disabled = true;
+
+            showStatus('Starting download... Trying multiple methods if needed.', 'info');
 
             try {
                 const response = await fetch('/api/download', {
@@ -371,10 +470,10 @@
                 document.body.removeChild(a);
                 window.URL.revokeObjectURL(downloadUrl);
 
-                showStatus('Download started! Check your downloads folder.', 'success');
+                showStatus('✅ Download started! Check your downloads folder.', 'success');
 
             } catch (error) {
-                showStatus(error.message, 'error');
+                showStatus(`❌ ${error.message}`, 'error');
             } finally {
                 hideLoader();
                 downloadBtn.disabled = false;
@@ -385,6 +484,8 @@
             videoUrlInput.value = '';
             videoInfo.classList.remove('show');
             hideStatus();
+            hideRetry();
+            retryCount = 0;
             qualitySelect.innerHTML = '<option value="">Loading formats...</option>';
         });
 
